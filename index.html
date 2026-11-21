@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Terry / Aegis / Joker counterpicks</title>
+<style>
+:root{--bg:#fff;--fg:#1b1b1b;--mut:#666;--line:#e6e6e6;--t:#a8461a;--tb:#fbe9df;--a:#0d6b60;--ab:#dcf2ee;--j:#7a2e8c;--jb:#f3e4f6;--d:#555;--db:#efefef}
+@media (prefers-color-scheme:dark){:root{--bg:#121212;--fg:#ececec;--mut:#9b9b9b;--line:#2b2b2b;--t:#f2a273;--tb:#3b2317;--a:#72d8c6;--ab:#133b35;--j:#e0a3ee;--jb:#3a1f40;--d:#c4c4c4;--db:#262626}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,sans-serif}
+main{max-width:560px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:20px;font-weight:600;margin:0 0 4px}
+.sub{color:var(--mut);font-size:13px;margin:0 0 14px}
+.modes{display:flex;gap:6px;margin:0 0 12px}
+.mb{flex:1;font:inherit;font-size:13px;padding:8px 4px;border:1px solid var(--line);border-radius:8px;background:none;color:var(--fg);cursor:pointer}
+.mb.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+input{width:100%;font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
+.chip{font:inherit;font-size:13px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:none;color:var(--fg);cursor:pointer}
+.chip.on{background:var(--db);border-color:var(--mut)}
+.row{padding:10px 0;border-bottom:1px solid var(--line)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.n{font-weight:600}
+.b{font-size:12px;padding:2px 8px;border-radius:6px;white-space:nowrap}
+.bT{background:var(--tb);color:var(--t)}.bA{background:var(--ab);color:var(--a)}.bJ{background:var(--jb);color:var(--j)}.bD{background:var(--db);color:var(--d)}
+.cT{color:var(--t);font-weight:600}.cA{color:var(--a);font-weight:600}.cJ{color:var(--j);font-weight:600}
+.r{font-size:13px;color:var(--mut);margin:4px 0 0}
+.foot{font-size:12px;color:var(--mut);margin-top:20px}
+</style>
+</head>
+<body>
+<main>
+<h1>Counterpicks</h1>
+<p class="sub">Terry 10M, Aegis 8M, Joker ~8M GSP. Depends = start Terry, switch if the condition shows up.</p>
+<div class="modes">
+<button class="mb" data-m="ta">Terry + Aegis</button>
+<button class="mb" data-m="tj">Terry + Joker</button>
+<button class="mb" data-m="taj">All three</button>
+</div>
+<input id="q" placeholder="Search a fighter" aria-label="Search a fighter">
+<div class="chips" id="chips"></div>
+<div id="list"></div>
+<p class="foot">-1 / even / +1 / +2 ratings from Game8's Terry and Joker matchup charts. Picks are opinions; adjust to your own results.</p>
+</main>
+<script>
+const X=[
+{n:"Mario",c:"TTT",t:"Even. Your weight outlasts his combos; ledge-trap his recovery."},
+{n:"Donkey Kong",c:"TTT",t:"Even. Big body eats your combos. Respect cargo throw near ledge."},
+{n:"Link",c:"AJJ",a:"Even on paper, but bombs and arrows wall Terry. Mythra breaks the zoning.",j:"Joker's +1. Speed and gun break bomb and arrow zoning."},
+{n:"Samus / Dark Samus",c:"AJJ",a:"Terry's -1. Charge shot and missiles wall you; Mythra runs through them.",j:"Joker's +1. Rebel's Guard tanks her projectiles to build Arsene."},
+{n:"Yoshi",c:"TTT",t:"Even. Anti-air his aerials; don't chase his double jump offstage."},
+{n:"Kirby",c:"AJJ",a:"Light and floaty. Pyra outranges him and kills early.",j:"Joker's +1. Out-combo him; Arsene kills light Kirby early."},
+{n:"Fox",c:"DDY",ta:["he rushes in (auto-turn and OoS Rising Tackle punish him)","he runs and lasers"],tj:["he rushes in (auto-turn and OoS Rising Tackle punish him)","he runs and lasers (Joker's +1; speed and gun chase him)"]},
+{n:"Pikachu",c:"ADA",a:"Terry's -1. Gimps your recovery; Pyra kills Pika early.",tj:["you're winning neutral (both are -1 here)","he's gimping Terry offstage (Joker recovers better)"]},
+{n:"Luigi",c:"TTT",t:"Even. Stay out of grab range and punish whiffed grabs."},
+{n:"Ness",c:"TTT",t:"Even. Your weight resists back throw; edgeguard PK Thunder."},
+{n:"Captain Falcon",c:"TTT",t:"Even. OoS Rising Tackle punishes his approaches."},
+{n:"Jigglypuff",c:"AJJ",a:"Terry's slow air speed can't chase her. Mythra can, and Pyra kills her early.",j:"Joker's +1. Gun forces her in; Arsene kills her early."},
+{n:"Peach / Daisy",c:"ATA",a:"Pyra's disjoint beats float aerials. Mythra punishes turnip pulls.",t:"Even for both Terry and Joker, so your Terry skill wins. Anti-air float aerials; watch turnips offstage."},
+{n:"Bowser",c:"TTT",t:"Even. Big target for nair combos; respect Flying Slam."},
+{n:"Ice Climbers",c:"DDY",ta:["they hunt grabs (Mythra's slow dodges are grab bait)","they space and stay together (Pyra separates Nana)"],tj:["they hunt grabs (your invincible OoS)","they space and stay together (gun and Eiha pick at Nana)"]},
+{n:"Sheik",c:"DTX",ta:["she's struggling to close stocks on heavy Terry","she's outpacing you in neutral"],t:"Even, and Joker's -1. She struggles to kill heavy Terry."},
+{n:"Zelda",c:"AJJ",a:"Mythra runs through Din's Fire and Phantom.",j:"Joker's +1. Speed gets through Phantom and Din's Fire."},
+{n:"Dr. Mario",c:"TTT",t:"Even. He's slow; whiff-punish him."},
+{n:"Pichu",c:"ATA",a:"Ultra-light. One Pyra read takes the stock.",t:"Even, and Joker's -1. Ultra-light; one read kills."},
+{n:"Falco",c:"DDY",ta:["he rushes in with combos","he camps lasers"],tj:["he rushes in with combos","he camps lasers (Joker's +1)"]},
+{n:"Marth",c:"AJA",a:"Terry's -1 (tipper outranges you). Pyra matches range.",j:"Even for Joker vs Terry's -1. Speed gets inside tipper range."},
+{n:"Lucina",c:"AJA",a:"Terry's -1. Pyra matches her range.",j:"Even for Joker vs Terry's -1. Speed gets inside her range."},
+{n:"Young Link",c:"AJJ",a:"Even on paper, but projectiles wall Terry. Mythra closes the gap.",j:"Joker's +1. Speed and gun break the zoning."},
+{n:"Ganondorf",c:"TJJ",t:"Even. Outpace him and punish whiffs.",j:"Joker's +2. Slow and big: combo food, and gun edgeguards his recovery."},
+{n:"Mewtwo",c:"TTT",t:"Terry's +1. Huge hurtbox eats your combos."},
+{n:"Roy",c:"TTT",t:"Even. Rising Tackle OoS beats his shield pressure."},
+{n:"Chrom",c:"TTT",t:"Even. Spike his linear Soaring Slash."},
+{n:"Mr. Game & Watch",c:"AJA",a:"Terry's -1. Pyra kills light G&W early. Bucket eats Mythra's up-B.",j:"Even for Joker vs Terry's -1."},
+{n:"Meta Knight",c:"AJJ",a:"Terry's air speed can't chase him. Pyra kills light MK early.",j:"Joker's +1. Keeps pace in the air where Terry can't."},
+{n:"Pit / Dark Pit",c:"TTT",t:"Terry's +1. Shield arrows and push in."},
+{n:"Zero Suit Samus",c:"AJJ",a:"Light; Pyra kills early. Watch flip-kick spikes on Mythra's recovery.",j:"Joker's +1. Match her speed and punish whiffs."},
+{n:"Wario",c:"DDY",ta:["he's aggressive in the air (anti-air him)","he plays patient around waft"],tj:["he's aggressive in the air (anti-air him)","he plays patient around waft (gun forces him to act)"]},
+{n:"Snake",c:"AJJ",a:"Terry's -1. Explosives wall you out; recover high with Mythra.",j:"Joker's +1. Rebel's Guard tanks explosives; speed gets in."},
+{n:"Ike",c:"TTT",t:"Even. Punish laggy swings; edgeguard Aether."},
+{n:"Pokémon Trainer",c:"AJA",a:"Terry's -1. Mythra's speed handles all three.",j:"Even for Joker vs Terry's -1."},
+{n:"Diddy Kong",c:"AJA",a:"Terry's -1. Pyra kills light Diddy early.",j:"Even for Joker vs Terry's -1."},
+{n:"Lucas",c:"TTT",t:"Even. Weight resists his throws; edgeguard PK Thunder."},
+{n:"Sonic",c:"DTX",ta:["he camps for time (he struggles to kill heavy Terry)","he out-scrambles you up close (Mythra's frame-2 jab)"],t:"Even, and Joker's -1. He struggles to kill heavy Terry."},
+{n:"King Dedede",c:"DJJ",ta:["he plays close and grab-heavy","he Gordo camps"],j:"Joker's +2. Big body is combo food; gun pressures from range."},
+{n:"Olimar",c:"TTT",t:"Terry's +1. Big swings clear pikmin."},
+{n:"Lucario",c:"TTT",t:"Even. Kill before aura scales."},
+{n:"R.O.B.",c:"DDY",ta:["he plays close and grab-heavy","he camps gyro and laser"],tj:["he plays close and grab-heavy","he camps gyro and laser (Arsene's counter reflects laser)"]},
+{n:"Toon Link",c:"AJJ",a:"Even on paper, but projectiles wall Terry. Mythra closes the gap.",j:"Joker's +1. Speed and gun break the zoning."},
+{n:"Wolf",c:"DDY",ta:["he rushes with nair and bair","he camps blaster"],tj:["he rushes with nair and bair","he camps blaster (Joker's +1)"]},
+{n:"Villager",c:"AJJ",a:"Even on paper, but Lloid and slingshot wall Terry. Pocket steals Mythra's up-B shots.",j:"Joker's +1. Speed breaks Lloid zoning, and his recovery holds up to edgeguards."},
+{n:"Mega Man",c:"AJA",a:"Terry's -1. Mythra beats pellet camping.",j:"Joker's -1 too, but his speed gets through pellets better than Terry."},
+{n:"Wii Fit Trainer",c:"AJJ",a:"Terry's -1. Mythra beats ball and Sun Salutation camping.",j:"Joker's +1. Rebel's Guard tanks her projectiles."},
+{n:"Rosalina & Luma",c:"AJJ",a:"Pyra's disjoints bully Luma. Mythra punishes Rosa.",j:"Joker's +1. Speed separates Luma and punishes Rosa."},
+{n:"Little Mac",c:"TTT",t:"Terry's +1. Free edgeguards; auto-turn stops crossups."},
+{n:"Greninja",c:"AJJ",a:"Mythra keeps pace. Pyra kills before he escapes.",j:"Joker's +1. Out-combo him."},
+{n:"Palutena",c:"AJA",a:"Terry's -1. Mythra breaks her zoning.",j:"Even for Joker vs Terry's -1."},
+{n:"Pac-Man",c:"AJA",a:"Terry's -1. Mythra rushes through hydrant and fruit.",j:"Even for Joker vs Terry's -1."},
+{n:"Robin",c:"AJJ",a:"Terry's -1. Mythra punishes slow tomes.",j:"Joker's even-to-+2 (Game8 lists Robin twice). Speed punishes slow tomes."},
+{n:"Shulk",c:"AJA",a:"Terry's -1. Outranged; Pyra matches his range.",j:"Not on Joker's chart. His speed punishes Shulk's laggy swings better than Terry."},
+{n:"Bowser Jr.",c:"DJJ",ta:["he pressures up close with Clown Car","he camps Mechakoopas"],j:"Joker's +2. Big body is combo food."},
+{n:"Duck Hunt",c:"AJJ",a:"Terry's -1. Mythra breaks can and disc zoning.",j:"Joker's +1. Speed breaks can and disc zoning."},
+{n:"Ryu",c:"TTT",t:"Even. Invincible specials trade evenly and you're heavier."},
+{n:"Ken",c:"AJA",a:"Terry's -1. Pyra's range keeps Ken out.",j:"Even for Joker vs Terry's -1."},
+{n:"Cloud",c:"DDY",ta:["he's up close and aggressive","he camps to charge Limit (Mythra punishes it)"],tj:["he's up close and aggressive","he camps to charge Limit (gun punishes the charge)"]},
+{n:"Corrin",c:"TTT",t:"Even. Punish laggy pin and smashes."},
+{n:"Bayonetta",c:"TTT",t:"Terry's +1. Invincible Rising Tackle breaks her pressure."},
+{n:"Inkling",c:"ADA",a:"Terry's -1. Mythra's speed and Pyra's range win.",tj:["they rush in (OoS punishes rolls)","they camp with ink and roller (both are -1; Joker's speed helps)"]},
+{n:"Ridley",c:"TTT",t:"Even. Huge hurtbox; ledge-trap his recovery."},
+{n:"Simon / Richter",c:"AJJ",a:"Even on paper, but holy water and axes wall Terry. Mythra runs through.",j:"Joker's +2. Speed gets through holy water and axes."},
+{n:"King K. Rool",c:"TTT",t:"Terry's +1. Big target; ledge-trap his recovery."},
+{n:"Isabelle",c:"TTT",t:"Terry's +1. She struggles to kill you."},
+{n:"Incineroar",c:"TTT",t:"Terry's +1. Ledge-trap his bad recovery."},
+{n:"Piranha Plant",c:"DDY",ta:["it plays close","it camps Ptooie"],tj:["it plays close","it camps Ptooie (Joker's +1)"]},
+{n:"Joker",c:"AJJ",a:"Terry's -1. Pyra kills before Arsene shows up.",j:"Ditto is even, better than Terry's -1."},
+{n:"Hero",c:"DDY",ta:["he rushes in with the sword","he zones with spells"],tj:["he rushes in with the sword","he zones with spells (Joker's +1)"]},
+{n:"Banjo & Kazooie",c:"DDY",ta:["he's aggressive with Wonderwing","he camps eggs (recover high with Mythra)"],tj:["he's aggressive with Wonderwing","he camps eggs (Joker's +1)"]},
+{n:"Terry",c:"TTT",t:"Ditto. Play your main."},
+{n:"Byleth",c:"DDY",ta:["he plays close","he zones with lances and arrows"],tj:["he plays close","he zones with lances and arrows (Joker's +1)"]},
+{n:"Min Min",c:"AJJ",a:"Terry's -1. Mythra is the zone-breaker.",j:"Joker's +1. Speed and Rebel's Guard get through the arms."},
+{n:"Steve",c:"AJA",a:"Game8 calls it even for Terry, but blocks and minecart punish his slow air speed. Pyra's sword breaks blocks.",j:"Not on Joker's chart. Speed punishes mining better than Terry."},
+{n:"Sephiroth",c:"DDY",ta:["he plays close","Shadow Flare and his range wall you out"],tj:["he plays close","Shadow Flare and his range wall you out (Joker's +1)"]},
+{n:"Pyra / Mythra",c:"DJJ",ta:["they lean on Pyra (punish laggy swings with invincible OoS)","they lean on Mythra and her speed runs you over"],j:"Not on Game8's chart. Joker can keep up with Mythra's speed; Terry can't."},
+{n:"Kazuya",c:"DJJ",ta:["you're winning neutral (his recovery is weak)","his combos keep landing on Terry's big body"],j:"Not on Game8's chart. Big body for your combos; gun edgeguards his weak recovery."},
+{n:"Sora",c:"TTT",t:"Not on Game8's chart. He struggles to kill heavy Terry."},
+{n:"Mii Brawler",c:"TTT",t:"Even. Edgeguard his recovery."},
+{n:"Mii Swordfighter",c:"TTT",t:"Terry's +1."},
+{n:"Mii Gunner",c:"AJJ",a:"Even on paper, but a zoner. Mythra closes in.",j:"Joker's +1. Speed breaks the zoning."}
+];
+X.sort((a,b)=>a.n.localeCompare(b.n));
+const NM={T:"Terry",A:"Aegis",J:"Joker"};
+const MI={ta:0,tj:1,taj:2};
+let mode="taj",f="all";
+try{const s=localStorage.getItem("mode");if(s in MI)mode=s;}catch(e){}
+const q=document.getElementById("q"),list=document.getElementById("list"),chips=document.getElementById("chips");
+const norm=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+function pick(x){
+const c=x.c[MI[mode]];
+if(c==="D")return mode==="tj"?{k:"D",p:["T","J"],d:x.tj}:{k:"D",p:["T","A"],d:x.ta};
+if(c==="X")return {k:"D",p:["T","A"],d:x.ta};
+if(c==="Y")return {k:"D",p:["T","J"],d:x.tj};
+return {k:c,s:x[c.toLowerCase()]};
+}
+function buildChips(){
+const ks=mode==="ta"?["T","A","D"]:mode==="tj"?["T","J","D"]:["T","J","A","D"];
+if(f!=="all"&&!ks.includes(f))f="all";
+const cnt={};X.forEach(x=>{const k=pick(x).k;cnt[k]=(cnt[k]||0)+1;});
+chips.innerHTML="";
+[["all","All "+X.length]].concat(ks.map(k=>[k,(k==="D"?"Depends":NM[k])+" "+(cnt[k]||0)])).forEach(([k,t])=>{
+const b=document.createElement("button");b.className="chip"+(k===f?" on":"");b.textContent=t;
+b.onclick=()=>{f=k;buildChips();draw();};chips.appendChild(b);});
+}
+function draw(){
+const s=norm(q.value.trim());
+const r=X.map(x=>[x,pick(x)]).filter(([x,p])=>(f==="all"||p.k===f)&&norm(x.n).includes(s));
+list.innerHTML=r.length?r.map(([x,p])=>{
+const lab=p.k==="D"?"Depends":NM[p.k];
+const body=p.k==="D"?'<p class="r"><span class="c'+p.p[0]+'">'+NM[p.p[0]]+'</span> if '+p.d[0]+'.</p><p class="r"><span class="c'+p.p[1]+'">'+NM[p.p[1]]+'</span> if '+p.d[1]+'.</p>':'<p class="r">'+p.s+'</p>';
+return '<div class="row"><div class="top"><span class="n">'+x.n+'</span><span class="b b'+p.k+'">'+lab+'</span></div>'+body+'</div>';
+}).join(""):'<p class="r">No fighter matches that search.</p>';
+}
+document.querySelectorAll(".mb").forEach(b=>{
+b.classList.toggle("on",b.dataset.m===mode);
+b.onclick=()=>{mode=b.dataset.m;try{localStorage.setItem("mode",mode);}catch(e){}
+document.querySelectorAll(".mb").forEach(o=>o.classList.toggle("on",o===b));buildChips();draw();};
+});
+q.oninput=draw;buildChips();draw();
+</script>
+</body>
+</html>
